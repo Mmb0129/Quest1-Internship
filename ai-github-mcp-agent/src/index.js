@@ -21,8 +21,9 @@ async function main() {
         // Initialize analysis engine
         analysisEngine = new AnalysisEngine(mcpClient, aiAgent);
 
+
         // Display target repository
-        console.log('\n📍 Target Repository:');
+        console.log('\n Target Repository:');
         console.log(`   ${config.github.owner}/${config.github.repo}`);
         console.log(`   Path: ${config.github.path}`);
         console.log(`   Branch: ${config.github.branch}`);
@@ -33,25 +34,26 @@ async function main() {
 
         // Display results
         console.log('\n' + '═'.repeat(50));
-        console.log('📋 ANALYSIS REPORT');
+        console.log('ANALYSIS REPORT');
         console.log('═'.repeat(50));
-        console.log(`\n📊 Files Analyzed: ${result.filesAnalyzed}`);
-        console.log(`🔍 Repository: ${result.repository}\n`);
+        console.log(`\nFiles Analyzed: ${result.filesAnalyzed}`);
+        console.log(`Repository: ${result.repository}\n`);
         console.log('─'.repeat(50));
         console.log(result.analysis);
         console.log('─'.repeat(50));
 
+
         // Display repository structure
         const repoData = analysisEngine.getRepositoryData();
         if (repoData.structure) {
-            console.log('\n📁 Repository Structure:\n');
+            console.log('\nRepository Structure:\n');
             console.log(repoData.structure);
         }
 
-        console.log('\n✅ Analysis completed successfully!\n');
+        console.log('\nAnalysis completed successfully!\n');
 
     } catch (error) {
-        console.error('\n❌ Error:', error.message);
+        console.error('\nError:', error.message);
         if (error.stack) {
             console.error('\nStack trace:', error.stack);
         }
@@ -66,7 +68,7 @@ async function main() {
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('\n\n👋 Shutting down gracefully...');
+    console.log('\n\nShutting down gracefully...');
     process.exit(0);
 });
 

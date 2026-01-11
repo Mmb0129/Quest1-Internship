@@ -9,7 +9,7 @@ export class MCPClient {
     }
 
     async connect() {
-        console.log('🔌 Connecting to GitHub MCP Server...');
+        console.log('Connecting to GitHub MCP Server...');
 
         try {
             this.transport = new StdioClientTransport({
@@ -29,14 +29,14 @@ export class MCPClient {
             });
 
             await this.client.connect(this.transport);
-            console.log('✅ Connected to GitHub MCP Server');
+            console.log('Connected to GitHub MCP Server');
 
             const tools = await this.listTools();
-            console.log(`📦 Available tools: ${tools.map(t => t.name).join(', ')}`);
+            console.log(`Available tools: ${tools.map(t => t.name).join(', ')}`);
 
             return true;
         } catch (error) {
-            console.error('❌ Failed to connect to MCP server:', error.message);
+            console.error('Failed to connect to MCP server:', error.message);
             throw error;
         }
     }
@@ -98,7 +98,7 @@ export class MCPClient {
     async close() {
         if (this.client) {
             await this.client.close();
-            console.log('🔌 Disconnected from MCP server');
+            console.log('Disconnected from MCP server');
         }
     }
 }

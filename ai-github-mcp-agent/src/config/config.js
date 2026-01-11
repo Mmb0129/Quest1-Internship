@@ -38,11 +38,11 @@ export function validateConfig() {
     }
 
     if (errors.length > 0) {
-        console.error('\n❌ Configuration Errors:');
+        console.error('\nConfiguration Errors:');
         errors.forEach(err => console.error(`  - ${err}`));
         console.error('\nPlease create a .env file with the required variables.\n');
         process.exit(1);
     }
 
-    console.log('✅ Configuration validated successfully');
+    console.log('Configuration validated successfully');
 }

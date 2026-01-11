@@ -12,21 +12,21 @@ export class AnalysisEngine {
     }
 
     async analyzeRepository() {
-        console.log('\n📊 Starting repository analysis...\n');
+        console.log('\nStarting repository analysis...\n');
 
         const { owner, repo, path, branch } = config.github;
 
         try {
             // Step 1: Search for files in the repository path
-            console.log('📁 Discovering repository files...');
+            console.log('Discovering repository files...');
             await this.discoverFiles(owner, repo, path);
 
             // Step 2: Fetch key source files
-            console.log('📄 Fetching source files...');
+            console.log('Fetching source files...');
             await this.fetchDiscoveredFiles(owner, repo, branch);
 
             // Step 3: Run AI analysis
-            console.log('🧠 Running AI analysis...\n');
+            console.log('Running AI analysis...\n');
             const analysis = await this.ai.summarizeCodebase(
                 this.repositoryData.files,
                 this.repositoryData.structure
@@ -38,7 +38,7 @@ export class AnalysisEngine {
                 repository: `${owner}/${repo}/${path}`
             };
         } catch (error) {
-            console.error('❌ Analysis failed:', error.message);
+            console.error('Analysis failed:', error.message);
             throw error;
         }
     }
@@ -47,16 +47,16 @@ export class AnalysisEngine {
         try {
             // Use search_code to find files in the specified path
             const query = `repo:${owner}/${repo} path:${path}`;
-            console.log(`🔍 Searching for files with query: ${query}`);
+            console.log(`Searching for files with query: ${query}`);
 
             const response = await this.mcp.callTool('search_code', { q: query });
 
             if (!response.content || response.content.length === 0) {
-                console.log('⚠️  No files found in search results');
+                console.log('No files found in search results');
 
                 // Try alternative: search for common file extensions in the path
                 const extensions = ['js', 'py', 'md', 'json', 'txt', 'lisp', 'cl', 'scm'];
-                console.log('🔍 Trying alternative search strategies...');
+                console.log('Trying alternative search strategies...');
 
                 for (const ext of extensions) {
                     const extQuery = `repo:${owner}/${repo} path:${path} extension:${ext}`;
@@ -116,13 +116,13 @@ export class AnalysisEngine {
                     }
                 });
             } else {
-                console.log('⚠️  No files found in search results');
+                console.log('No files found in search results');
             }
         } catch (error) {
-            console.warn(`⚠️  Could not discover files:`, error.message);
+            console.warn(`Could not discover files:`, error.message);
 
             // Fallback: try to fetch common files
-            console.log('📝 Attempting to fetch common files directly...');
+            console.log('Attempting to fetch common files directly...');
             const commonFiles = ['README.md', 'index.js', 'main.py', 'package.json'];
             for (const file of commonFiles) {
                 const filePath = path ? `${path}/${file}` : file;
@@ -139,11 +139,11 @@ export class AnalysisEngine {
         const filesToFetch = this.repositoryData.files.filter(f => f.needsFetch);
 
         if (filesToFetch.length === 0) {
-            console.log('⚠️  No files to fetch');
+            console.log('No files to fetch');
             return;
         }
 
-        console.log(`📥 Fetching ${filesToFetch.length} files...`);
+        console.log(`Fetching ${filesToFetch.length} files...`);
 
         for (const fileInfo of filesToFetch) {
             await this.fetchFileContent(owner, repo, fileInfo.path, branch);
