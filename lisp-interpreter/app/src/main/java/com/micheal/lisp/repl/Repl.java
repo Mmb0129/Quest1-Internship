@@ -3,6 +3,7 @@ package com.micheal.lisp.repl;
 import com.micheal.lisp.parser.LispParser;
 import com.micheal.lisp.visitor.EvaluationVisitor;
 import com.micheal.lisp.ast.Node;
+import com.micheal.lisp.exception.*;
 
 import java.util.Scanner;
 
@@ -18,7 +19,6 @@ public class Repl {
 
     public void start() {
         Scanner scanner = new Scanner(System.in);
-
         System.out.println("Lisp Interpreter");
         System.out.println("Type 'exit' to quit");
 
@@ -31,12 +31,10 @@ public class Repl {
             }
 
             String input = scanner.nextLine().trim();
-
             if (input.equalsIgnoreCase("exit")) {
                 System.out.println("Goodbye!");
                 break;
             }
-
             if (input.isEmpty()) {
                 continue;
             }
@@ -45,10 +43,14 @@ public class Repl {
                 Node ast = parser.parse(input);
                 Object result = ast.accept(evaluator);
                 System.out.println(result);
+            } catch (LispException e) {
+                System.err.println("Error: " + e.getMessage());
             } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                System.err.println("Unexpected error: " + e.getMessage());
+                if (e.getCause() != null) {
+                    System.err.println("  Caused by: " + e.getCause().getMessage());
+                }
             }
         }
-
     }
 }

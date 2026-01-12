@@ -1,9 +1,6 @@
 package com.micheal.lisp;
-import com.micheal.lisp.ast.*;
-import com.micheal.lisp.repl.Repl;
-import com.micheal.lisp.visitor.EvaluationVisitor;
 
-import java.util.List;
+import com.micheal.lisp.repl.Repl;
 
 public class LispInterpreterApp {
 

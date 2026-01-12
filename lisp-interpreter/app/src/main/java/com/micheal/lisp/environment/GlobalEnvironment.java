@@ -1,5 +1,7 @@
 package com.micheal.lisp.environment;
 
+import com.micheal.lisp.exception.UndefinedSymbolException;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,12 +19,15 @@ public class GlobalEnvironment {
     }
 
     public void define(String name, Object value) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Symbol name cannot be null or empty");
+        }
         symbols.put(name, value);
     }
 
     public Object lookup(String name) {
         if (!symbols.containsKey(name)) {
-            throw new RuntimeException("Undefined symbol: " + name);
+            throw new UndefinedSymbolException(name);
         }
         return symbols.get(name);
     }

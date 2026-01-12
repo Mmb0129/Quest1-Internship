@@ -18,20 +18,17 @@ public class LispParser {
         return parseExpression();
     }
 
-    // ------------------ Parsing ------------------
-
     private Node parseExpression() {
         String token = tokens.get(position);
 
         if ("(".equals(token)) {
-            position++; // consume '('
+            position++; // skip '('
             List<Node> elements = new ArrayList<>();
 
             while (!")".equals(tokens.get(position))) {
                 elements.add(parseExpression());
             }
-
-            position++; // consume ')'
+            position++; // skip ')'
             return nodeFactory.createList(elements);
         }
 
@@ -46,19 +43,18 @@ public class LispParser {
         return nodeFactory.createSymbol(token);
     }
 
-    // ------------------ Tokenizer ------------------
-
     private List<String> tokenize(String input) {
+        // add spaces around parens so they become separate tokens
         input = input.replace("(", " ( ").replace(")", " ) ");
-        String[] rawTokens = input.trim().split("\\s+");
+        String[] parts = input.trim().split("\\s+");
 
-        List<String> result = new ArrayList<>();
-        for (String token : rawTokens) {
-            if (!token.isBlank()) {
-                result.add(token);
+        List<String> tokens = new ArrayList<>();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                tokens.add(part);
             }
         }
-        return result;
+        return tokens;
     }
 
     private boolean isNumber(String token) {
