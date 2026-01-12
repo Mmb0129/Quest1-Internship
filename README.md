@@ -9,6 +9,7 @@ This repository contains all the assignments, practice tasks, and mini-projects 
 - **Name:** Micheal Berdinanth M  
 - **Role:** Software Engineering Intern  
 - **College:** SSN College of Engineering  
-- **Internship Organization:** Quest1 Inc  
+- **Internship Organization:** Quest1 Inc
+- **LinkedIn:** https://www.linkedin.com/in/micheal-berdinanth-m
 
 ---
