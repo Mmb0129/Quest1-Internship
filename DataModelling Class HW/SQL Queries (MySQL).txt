@@ -1,0 +1,48 @@
+SQL Queries (MySQL)
+
+1. Seller: Total Revenue in Last week
+
+Select s.seller_id, SUM(oi.quantity * oi.price_at_purchase) AS Total_Revenue_LastWeek
+From Seller s
+JOIN Product p on s.seller_id = p.seller_id
+JOIN OrderItems oi on p.pid = oi.pid
+JOIN Orders o on oi.oid = o.oid
+WHERE o.order_date >= CURDATE() - INTERVAL 7  DAY
+GROUP BY s.seller_id;
+
+
+2. Top 10 Selling Product (Sales/Year)
+
+
+Select p.pid, p.pname, YEAR(0.order_date) AS Sales_Year, SUM(oi.quantity) AS TotalUnitsSold
+From Product p
+JOIN OrderItems oi ON p.pid= oi.pid
+JOIN Orders o on oi.oid = o.oid
+GROUP BY p.pid, p.pname, sales_year
+Group BY TotalUnitsSold DESC
+LIMIT 10;
+
+
+
+3. Buyer: Expense per Category
+
+Select c.catname, SUM(oi.quantity * oi.price_at_purchase) AS TotalExpense
+From Orders o
+JOIN OrderItems oi on o.oid= oi.oid
+JOIN Product p on oi.pid= p.pid
+JOIN Category c on p.catid= c.catid
+WHERE o.buyer_id = "B01"
+GROUP BY c.catname;
+
+
+4. Buyer: Top 10 Product Ordered (by Purchase Value)
+
+
+SELECT p.pid, p.pname, SUM(oi.quantity* oi.price_at_purchase) AS total_value
+FROM Orders o
+JOIN OrderItems oi ON o.oid= oi.oid
+JOIN Product p on oi.pid= p.pid
+WHERE o.buyer_id= "B01"
+GROUP BY p.pid, p.pname
+ORDER BY total_value DESC
+LIMIT 10;
