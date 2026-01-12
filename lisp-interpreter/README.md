@@ -145,7 +145,7 @@ All errors are caught and displayed in a user-friendly way.
 
 ## Example Expressions
 
-Here are some examples of what you can do:
+Here are some more examples of what you can do:
 
 ```lisp
 ; Basic arithmetic
