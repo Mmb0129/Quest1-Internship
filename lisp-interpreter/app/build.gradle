@@ -6,9 +6,11 @@
  */
 
 plugins {
-    // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'pmd'
+    id 'com.github.spotbugs' version '6.0.7'
 }
+
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -43,3 +45,44 @@ jar {
     }
 }
 
+pmd {
+    consoleOutput = true
+    toolVersion = "7.0.0"
+    rulesMinimumPriority = 5
+    ruleSets = [
+            'category/java/errorprone.xml',
+            'category/java/bestpractices.xml'
+    ]
+}
+tasks.withType(Pmd).configureEach {
+    ignoreFailures = true
+}
+
+
+spotbugs {
+    ignoreFailures = true
+    showStackTraces = true
+    showProgress = true
+    effort = 'max'
+    reportLevel = 'low'
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+    reports {
+        html {
+            required = true
+            outputLocation = file("${buildDir}/reports/spotbugs/${name}.html")
+        }
+        xml {
+            required = false
+        }
+    }
+}
+
+//tasks.withType(Pmd) {
+//    jvmArgs = ['-Xmx1g']
+//}
+//
+//tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+//    jvmArgs = ['-Xmx1g']
+//}
