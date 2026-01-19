@@ -65,7 +65,7 @@ Goodbye!
 
 The interpreter works in three main steps:
 
-1. **Parsing**: Takes ymy text input and turns it into a tree structure (called an Abstract Syntax Tree or AST)
+1. **Parsing**: Takes my text input and turns it into a tree structure (called an Abstract Syntax Tree or AST)
 2. **Evaluation**: Walks through the tree and figures out what the expression means
 3. **Output**: Shows you the result
 

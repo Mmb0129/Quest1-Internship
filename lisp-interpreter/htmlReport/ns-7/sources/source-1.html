@@ -1,0 +1,172 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Repl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.micheal.lisp.repl</a>
+</div>
+
+<h1>Coverage Summary for Class: Repl (com.micheal.lisp.repl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Repl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/20)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.micheal.lisp.repl;
+&nbsp;
+&nbsp;import com.micheal.lisp.parser.LispParser;
+&nbsp;import com.micheal.lisp.visitor.EvaluationVisitor;
+&nbsp;import com.micheal.lisp.ast.Node;
+&nbsp;import com.micheal.lisp.exception.*;
+&nbsp;
+&nbsp;import java.util.Scanner;
+&nbsp;
+&nbsp;public class Repl {
+&nbsp;
+&nbsp;    private final LispParser parser;
+&nbsp;    private final EvaluationVisitor evaluator;
+&nbsp;
+<b class="nc">&nbsp;    public Repl() {</b>
+<b class="nc">&nbsp;        this.parser = new LispParser();</b>
+<b class="nc">&nbsp;        this.evaluator = new EvaluationVisitor();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void start() {
+<b class="nc">&nbsp;        Scanner scanner = new Scanner(System.in);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;Lisp Interpreter&quot;);</b>
+<b class="nc">&nbsp;        System.out.println(&quot;Type &#39;exit&#39; to quit&quot;);</b>
+&nbsp;
+&nbsp;        while (true) {
+<b class="nc">&nbsp;            System.out.print(&quot;lisp&gt; &quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (!scanner.hasNextLine()) {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;\nInput stream closed. Exiting...&quot;);</b>
+&nbsp;                break;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            String input = scanner.nextLine().trim();</b>
+<b class="nc">&nbsp;            if (input.equalsIgnoreCase(&quot;exit&quot;)) {</b>
+<b class="nc">&nbsp;                System.out.println(&quot;Goodbye!&quot;);</b>
+&nbsp;                break;
+&nbsp;            }
+<b class="nc">&nbsp;            if (input.isEmpty()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+&nbsp;            try {
+<b class="nc">&nbsp;                Node ast = parser.parse(input);</b>
+<b class="nc">&nbsp;                Object result = ast.accept(evaluator);</b>
+<b class="nc">&nbsp;                System.out.println(result);</b>
+&nbsp;            } catch (LispException e) {
+<b class="nc">&nbsp;                System.err.println(&quot;Error: &quot; + e.getMessage());</b>
+&nbsp;            } catch (Exception e) {
+<b class="nc">&nbsp;                System.err.println(&quot;Unexpected error: &quot; + e.getMessage());</b>
+<b class="nc">&nbsp;                if (e.getCause() != null) {</b>
+<b class="nc">&nbsp;                    System.err.println(&quot;  Caused by: &quot; + e.getCause().getMessage());</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-01-16 18:32</div>
+</div>
+</body>
+</html>

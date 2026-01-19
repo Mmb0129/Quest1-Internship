@@ -1,6 +1,6 @@
 package com.micheal.lisp.environment;
 
-import com.micheal.lisp.exception.UndefinedSymbolException;
+import com.micheal.lisp.exception.LispException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +27,7 @@ public class GlobalEnvironment {
 
     public Object lookup(String name) {
         if (!symbols.containsKey(name)) {
-            throw new UndefinedSymbolException(name);
+            throw new LispException("Undefined symbol: '" + name + "'");
         }
         return symbols.get(name);
     }

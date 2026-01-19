@@ -3,7 +3,7 @@ package com.micheal.lisp.repl;
 import com.micheal.lisp.parser.LispParser;
 import com.micheal.lisp.visitor.EvaluationVisitor;
 import com.micheal.lisp.ast.Node;
-import com.micheal.lisp.exception.*;
+import com.micheal.lisp.exception.LispException;
 
 import java.util.Scanner;
 

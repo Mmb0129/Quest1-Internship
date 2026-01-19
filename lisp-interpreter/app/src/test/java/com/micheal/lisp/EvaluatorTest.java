@@ -1,9 +1,7 @@
 package com.micheal.lisp;
 
-import com.micheal.lisp.environment.GlobalEnvironment;
 import com.micheal.lisp.parser.LispParser;
 import com.micheal.lisp.visitor.EvaluationVisitor;
-import com.micheal.lisp.exception.*;
 import org.junit.Test;
 import org.junit.Before;
 import com.micheal.lisp.ast.*;

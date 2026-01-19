@@ -2,7 +2,7 @@ package com.micheal.lisp.visitor;
 
 import com.micheal.lisp.ast.*;
 import com.micheal.lisp.environment.GlobalEnvironment;
-import com.micheal.lisp.exception.*;
+import com.micheal.lisp.exception.LispException;
 
 import java.util.List;
 
@@ -24,11 +24,11 @@ public class EvaluationVisitor implements Visitor {
             return (Integer) value;
         }
         if (value instanceof Number) {
-            throw new EvaluationException(
+            throw new LispException(
                 String.format("Arithmetic operation '%s' requires integer operands, got: %s", 
                     operation, value.getClass().getSimpleName()));
         }
-        throw new EvaluationException(
+        throw new LispException(
             String.format("Arithmetic operation '%s' requires numeric operands, got: %s", 
                 operation, value.getClass().getSimpleName()));
     }
@@ -39,12 +39,12 @@ public class EvaluationVisitor implements Visitor {
         var elements = node.getElements();
 
         if (elements.isEmpty()) {
-            throw new EvaluationException("Cannot evaluate empty list");
+            throw new LispException("Cannot evaluate empty list");
         }
         
         var first = elements.get(0);
         if (!(first instanceof SymbolNode)) {
-            throw new EvaluationException("First element must be an operator");
+            throw new LispException("First element must be an operator");
         }
 
         String op = ((SymbolNode) first).getName();
@@ -71,7 +71,7 @@ public class EvaluationVisitor implements Visitor {
             case "=":
                 return evaluateEquals(elements);
             default:
-                throw new InvalidOperatorException(op);
+                throw new LispException("Unknown or invalid operator: '" + op + "'");
         }
     }
 
@@ -86,7 +86,7 @@ public class EvaluationVisitor implements Visitor {
 
     private int evaluateSubtraction(List<Node> operands) {
         if (operands.isEmpty()) {
-            throw new InvalidArgumentCountException("-", "expects at least one argument");
+            throw new LispException("Operator '-' expects at least one argument");
         }
 
         int result = toInt(operands.get(0).accept(this), "-");
@@ -113,7 +113,7 @@ public class EvaluationVisitor implements Visitor {
 
     private int evaluateDivision(List<Node> operands) {
         if (operands.isEmpty()) {
-            throw new InvalidArgumentCountException("/", "expects at least one argument");
+            throw new LispException("Operator '/' expects at least one argument");
         }
 
         int result = toInt(operands.get(0).accept(this), "/");
@@ -121,7 +121,7 @@ public class EvaluationVisitor implements Visitor {
         for (int i = 1; i < operands.size(); i++) {
             int divisor = toInt(operands.get(i).accept(this), "/");
             if (divisor == 0) {
-                throw new LispArithmeticException("division", "Division by zero");
+                throw new LispException("Arithmetic error in division: Division by zero");
             }
             result /= divisor;
         }
@@ -131,14 +131,14 @@ public class EvaluationVisitor implements Visitor {
 
     private int evaluateModulo(List<Node> operands) {
         if (operands.size() != 2) {
-            throw new InvalidArgumentCountException("%", 2, operands.size());
+            throw new LispException(String.format("Operator '%%' expects 2 argument(s), but got %d", operands.size()));
         }
 
         int a = toInt(operands.get(0).accept(this), "%");
         int b = toInt(operands.get(1).accept(this), "%");
 
         if (b == 0) {
-            throw new LispArithmeticException("modulo", "Modulo by zero");
+            throw new LispException("Arithmetic error in modulo: Modulo by zero");
         }
 
         return a % b;
@@ -147,12 +147,12 @@ public class EvaluationVisitor implements Visitor {
 
     private Object evaluateDefine(List<Node> elements) {
         if (elements.size() != 3) {
-            throw new InvalidArgumentCountException("define", 2, elements.size() - 1);
+            throw new LispException(String.format("Operator 'define' expects 2 argument(s), but got %d", elements.size() - 1));
         }
 
         Node nameNode = elements.get(1);
         if (!(nameNode instanceof SymbolNode)) {
-            throw new EvaluationException("First argument to 'define' must be a symbol");
+            throw new LispException("First argument to 'define' must be a symbol");
         }
 
         String name = ((SymbolNode) nameNode).getName();
@@ -163,7 +163,7 @@ public class EvaluationVisitor implements Visitor {
 
     private Object evaluateGreaterThan(List<Node> elements) {
         if (elements.size() != 3) {
-            throw new InvalidArgumentCountException(">", 2, elements.size() - 1);
+            throw new LispException(String.format("Operator '>' expects 2 argument(s), but got %d", elements.size() - 1));
         }
 
         int left = toInt(elements.get(1).accept(this), ">");
@@ -174,7 +174,7 @@ public class EvaluationVisitor implements Visitor {
 
     private Object evaluateLessThan(List<Node> elements) {
         if (elements.size() != 3) {
-            throw new InvalidArgumentCountException("<", 2, elements.size() - 1);
+            throw new LispException(String.format("Operator '<' expects 2 argument(s), but got %d", elements.size() - 1));
         }
 
         int left = toInt(elements.get(1).accept(this), "<");
@@ -185,7 +185,7 @@ public class EvaluationVisitor implements Visitor {
 
     private Object evaluateEquals(List<Node> elements) {
         if (elements.size() != 3) {
-            throw new InvalidArgumentCountException("=", 2, elements.size() - 1);
+            throw new LispException(String.format("Operator '=' expects 2 argument(s), but got %d", elements.size() - 1));
         }
 
         Object left = elements.get(1).accept(this);
@@ -196,12 +196,12 @@ public class EvaluationVisitor implements Visitor {
 
     private Object evaluateIf(List<Node> elements) {
         if (elements.size() != 4) {
-            throw new InvalidArgumentCountException("if", 3, elements.size() - 1);
+            throw new LispException(String.format("Operator 'if' expects 3 argument(s), but got %d", elements.size() - 1));
         }
 
         Object condition = elements.get(1).accept(this);
         if (!(condition instanceof Boolean)) {
-            throw new EvaluationException("'if' condition must evaluate to a boolean value, got: " + 
+            throw new LispException("'if' condition must evaluate to a boolean value, got: " + 
                 condition.getClass().getSimpleName());
         }
 
