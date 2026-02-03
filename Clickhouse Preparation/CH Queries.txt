@@ -1,0 +1,1515 @@
+SHOW DATABASES;
+
+
+SELECT * 
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices/uk_prices.csv.zst')
+LIMIT 1000;
+
+DESC s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices/uk_prices.csv.zst');
+
+CREATE OR REPLACE TABLE uk_prices_temp 
+ENGINE = Memory
+AS 
+    SELECT * 
+    FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices/uk_prices.csv.zst')
+    LIMIT 100;
+
+
+SHOW CREATE TABLE uk_prices_temp;
+
+
+CREATE TABLE uk_prices_1
+(
+    `id` Nullable(String),
+    `price` Nullable(String),
+    `date` DateTime,
+    `postcode` Nullable(String),
+    `type` Nullable(String),
+    `is_new` Nullable(String),
+    `duration` Nullable(String),
+    `addr1` Nullable(String),
+    `addr2` Nullable(String),
+    `street` Nullable(String),
+    `locality` Nullable(String),
+    `town` Nullable(String),
+    `district` Nullable(String),
+    `county` Nullable(String),
+    `column15` Nullable(String),
+    `column16` Nullable(String)
+)
+ENGINE = MergeTree
+PRIMARY KEY date;
+
+
+INSERT INTO uk_prices_1
+    SELECT * 
+    FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/uk_property_prices/uk_prices.csv.zst');
+
+
+SELECT count()
+FROM uk_prices_1;
+
+
+SELECT avg(toUInt32(price))
+FROM uk_prices_1;
+
+
+SELECT avg(toUInt32(price))
+FROM uk_prices_1
+WHERE toYear(date) >= '2020';
+
+
+
+SELECT avg(toUInt32(price))
+FROM uk_prices_1
+WHERE town = 'LONDON';
+
+
+
+SELECT * from system.parts
+where table = 'uk_prices_1' and active = 1;
+
+
+SELECT
+    formatReadableSize(sum(data_compressed_bytes)) as Compressed,
+    formatReadableSize(sum(data_uncompressed_bytes)) as data_uncompressed_bytes
+FROM system.parts
+where table='uk_prices_1';
+
+
+
+
+SELECT avg(toUInt32(price))
+from system.parts
+where table = 'uk_prices_1' and town = 'London';
+
+
+SELECT avg(toUInt32(price))
+FROM uk_prices_1
+WHERE town = 'LONDON';
+
+
+SELECT avg(toUInt32(price))
+from uk_prices_1
+where toYYYYMM(date) = '202207';
+
+
+
+DESC s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/noaa/noaa_enriched.parquet')
+SETTINGS schema_inference_make_columns_nullable=0;
+
+
+
+
+
+
+
+CREATE TABLE weather_temp
+ENGINE = Memory
+AS
+    SELECT * FROM
+    s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/noaa/noaa_enriched.parquet')
+    LIMIT 100
+    SETTINGS schema_inference_make_columns_nullable=0;
+
+
+
+SHOW CREATE TABLE weather_temp;
+
+
+
+CREATE TABLE Weather
+(
+    `station_id` String,
+    `date` Date32,
+    `tempAvg` Int32,
+    `tempMax` Int32,
+    `tempMin` Int32,
+    `precipitation` Int32,
+    `snowfall` Int32,
+    `snowDepth` Int32,
+    `percentDailySun` Int8,
+    `averageWindSpeed` Int32,
+    `maxWindSpeed` Int32,
+    `weatherType` UInt8,
+    `location` Tuple(
+        `1` Float64,
+        `2` Float64),
+    `elevation` Float32,
+    `name` String
+)
+ENGINE = MergeTree
+PRIMARY KEY (date);
+
+
+
+INSERT INTO Weather
+    SELECT * 
+    FROM s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/noaa/noaa_enriched.parquet')
+    WHERE toYear(date) >= '1995';
+
+
+SELECT count() FROM Weather;
+
+
+SELECT
+    tempMax / 10 AS maxTemp,
+    location,
+    name,
+    date
+FROM Weather
+WHERE tempMax > 500
+ORDER BY
+    tempMax DESC,
+    date ASC
+LIMIT 10;
+
+
+
+SELECT
+    formatReadableSize(sum(data_compressed_bytes)) AS compressed_size,
+    formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed_size
+FROM system.parts
+WHERE table = 'Weather' AND active = 1;
+
+
+
+SELECT formatReadableQuantity(count()) FROM Weather;
+
+
+SELECT
+    formatReadableSize(sum(data_compressed_bytes)) AS compressed_size,
+    formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed_size
+FROM system.parts
+WHERE table = 'Weather' AND active = 1;
+
+DESC s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter='~';
+
+
+SELECT * FROM
+s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter='~';
+
+SELECT formatReadableQuantity(sum(actual_amount))
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~';
+
+
+SELECT formatReadableQuantity(sum(actual_amount))
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~';
+
+
+SELECT formatReadableQuantity(sum(toUInt32(approved_amount)))
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~';
+
+
+SELECT formatReadableQuantity(sum(toUInt32OrZero(approved_amount))) AS ApprovedAmount,
+formatReadableQuantity(sum(toUInt32OrZero(recommended_amount))) AS RecommendedAmount
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS format_csv_delimiter = '~';
+
+SELECT
+    formatReadableQuantity(sum(approved_amount)),
+    formatReadableQuantity(sum(recommended_amount))
+FROM s3('https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv')
+SETTINGS
+format_csv_delimiter='~',
+schema_inference_hints='approved_amount UInt32, recommended_amount UInt32';
+
+
+
+CREATE TABLE operating_budget (
+    fiscal_year LowCardinality(String),
+    service LowCardinality(String),
+    department LowCardinality(String),
+    program LowCardinality(String),
+    program_code LowCardinality(String),
+    description String,
+    item_category LowCardinality(String),
+    approved_amount UInt32,
+    recommended_amount UInt32,
+    actual_amount Decimal(12,2),
+    fund LowCardinality(String),
+    fund_type Enum8('GENERAL FUNDS' = 1, 'FEDERAL FUNDS' = 2, 'OTHER FUNDS' = 3)
+)
+ENGINE = MergeTree
+PRIMARY KEY (fiscal_year, program)
+SETTINGS format_csv_delimiter = '~';
+
+
+
+
+INSERT INTO operating_budget
+    WITH
+        splitByChar('(', c4) AS result
+    SELECT
+        c1 AS fiscal_year,
+        c2 AS service,
+        c3 AS department,
+        result[1] AS program,
+        splitByChar(')',result[2])[1] AS program_code,
+        c5 AS description,
+        c6 AS item_category,
+        toUInt32OrZero(c7) AS approved_amount,
+        toUInt32OrZero(c8) AS recommended_amount,
+        toDecimal64(c9, 2) AS actual_amount,
+        c10 AS fund,
+        c11 AS fund_type
+    FROM s3(
+        'https://learn-clickhouse.s3.us-east-2.amazonaws.com/operating_budget.csv',
+        'CSV',
+        'c1 String,
+        c2 String,
+        c3 String,
+        c4 String,
+        c5 String,
+        c6 String,
+        c7 String,
+        c8 String,
+        c9 String,
+        c10 String,
+        c11 String'
+        )
+    SETTINGS
+        format_csv_delimiter = '~',
+        input_format_csv_skip_first_lines=1;
+
+SELECT * FROM operating_budget;
+
+
+SELECT formatReadableQuantity(sum(approved_amount))
+FROM operating_budget
+WHERE fiscal_year = '2022';
+
+SELECT sum(actual_amount)
+FROM operating_budget
+WHERE fiscal_year = '2022'
+AND program_code = '031';
+
+
+
+
+SELECT * from system.data_type_families;
+
+
+CREATE TABLE uk_prices_2
+(
+    `id` Nullable(String),
+    `price` Nullable(String),
+    `date` DateTime,
+    `postcode` String,
+    `type` Nullable(String),
+    `is_new` Nullable(String),
+    `duration` Nullable(String),
+    `addr1` Nullable(String),
+    `addr2` Nullable(String),
+    `street` Nullable(String),
+    `locality` Nullable(String),
+    `town` Nullable(String),
+    `district` Nullable(String),
+    `county` Nullable(String),
+    `column15` Nullable(String),
+    `column16` Nullable(String)
+)
+ENGINE = MergeTree
+PRIMARY KEY (postcode, date);
+
+
+
+SELECT postcode from uk_prices_2 where postcode !='';
+
+
+
+INSERT INTO uk_prices_2
+ SELECT * FROM uk_prices_1;
+
+SELECT id, 
+    replaceRegexpAll(id, '[{}]', '')
+from uk_prices_2;
+
+
+WITH
+    splitByChar(' ', postcode) AS postcodes
+SELECT
+    postcodes[1] AS postcode1,
+    postcodes[2] AS postcode2
+FROM uk_prices_2
+WHERE postcode != ''
+LIMIT 100;
+
+
+SELECT
+    uniq(postcode1), uniq(postcode2)
+    FROM (
+WITH
+    splitByChar(' ', postcode) as postcodes
+SELECT postcodes[1] as postcode1,
+    postcodes[2] as postcode2
+from uk_prices_2
+where postcode != ''
+    );
+
+
+
+SELECT count(*) as Total
+From uk_prices_1;
+
+-- 30033199
+
+
+SELECT 
+    uniq(postcode),
+    uniq(addr1),
+    uniq(addr2),
+    uniq(street),
+    uniq(locality),
+    uniq(town),
+    uniq(district),
+    uniq(county) 
+FROM uk_prices_2;
+
+-- so town , district , country has less than 10k unique values so these can be made Lowcardinality fields
+
+CREATE TABLE uk_prices_3
+(
+    id UUID,
+    price UInt32,
+    date DateTime,
+    postcode1 String,
+    postcode2 String,
+    type Enum8('terraced' = 1, 'semi-detached' = 2, 'detached' = 3, 'flat' = 4, 'other' = 0),
+    is_new UInt8,
+    duration Enum8('freehold' = 1, 'leasehold' = 2, 'unknown' = 0),
+    addr1 String,
+    addr2 String,
+    street String,
+    locality LowCardinality(String),
+    town LowCardinality(String),
+    district LowCardinality(String),
+    county LowCardinality(String)
+)
+ENGINE = MergeTree
+PRIMARY KEY (postcode1, postcode2);
+
+
+
+INSERT INTO uk_prices_3
+    WITH
+        splitByChar(' ', postcode) AS postcodes
+    SELECT
+        replaceRegexpAll(id,'[{}]','') AS id,
+        toUInt32(price) AS price,
+        date,
+        postcodes[1] AS postcode1,
+        postcodes[2] AS postcode2,
+        transform(type, ['T', 'S', 'D', 'F', 'O'], ['terraced', 'semi-detached', 'detached', 'flat', 'other'],'other') AS type,
+        is_new = 'Y' AS is_new,
+        transform(duration, ['F', 'L', 'U'], ['freehold', 'leasehold', 'unknown'],'unknown') AS duration,
+        addr1,
+        addr2,
+        street,
+        locality,
+        town,
+        district,
+        county
+    FROM uk_prices_2;
+
+
+SELECT formatReadableQuantity(count()) from uk_prices_3;
+
+
+SELECT
+    table,
+    formatReadableSize(sum(data_compressed_bytes)) AS compressed_size,
+    formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed_size
+FROM system.parts
+WHERE table ilike 'uk_prices_%' AND active = 1
+GROUP BY table
+ORDER BY table;
+
+
+show CREATE table uk_prices_1;
+show CREATE table uk_prices_2;
+show CREATE table uk_prices_3;
+
+
+
+
+
+SELECT 
+    town,
+    (max(price))
+FROM uk_prices_3
+GROUP BY town 
+ORDER BY 2 DESC
+LIMIT 25;
+
+
+
+
+
+
+SELECT
+    formatReadableQuantity(avg(price)),
+    formatReadableQuantity(max(price))
+FROM uk_prices_3 
+WHERE postcode1 = 'BD16'
+AND postcode2 = '1AE';
+
+
+
+SELECT
+    avg(price),
+    max(price) 
+FROM uk_prices_3 
+WHERE postcode2 = '1AE';
+
+SHOW CREATE TABLE uk_prices_3
+
+
+
+SELECT count() from system.functions;
+
+select id, price from uk_prices_3 where price>=100000000 ORDER BY 2 DESC;
+
+
+select count() from uk_prices_3 where price >= 1000000 and date>= toDate('2024-01-01') and date <= toDate('2024-12-31')
+
+
+select uniq(town) from uk_prices_3;
+
+
+select town, count() from uk_prices_3 GROUP BY town order BY 2 desc limit 1;
+
+
+-- Using the topK function, write a query that returns the top 10 towns that are not London with the most properties sold.
+
+
+SELECT topK(10) (town) FROM uk_prices_3
+where town!= 'LONDON';
+
+-- Elapsed: 0.833s
+-- Read: 17,16,13,978 rows (325.06 MB)
+
+-- [
+--   "BIRMINGHAM",
+--   "MANCHESTER",
+--   "BRISTOL",
+--   "NOTTINGHAM",
+--   "LEEDS",
+--   "LIVERPOOL",
+--   "SHEFFIELD",
+--   "LEICESTER",
+--   "NORWICH",
+--   "SOUTHAMPTON"
+-- ]
+
+SELECT topKIf(10)(town, town != 'LONDON')
+FROM uk_prices_3;
+
+
+-- [    Elapsed: 0.811s
+-- Read: 18,01,99,194 rows (342.77 MB)
+--   "MANCHESTER",
+--   "BIRMINGHAM",
+--   "NOTTINGHAM",
+--   "BRISTOL",
+--   "LEEDS",
+--   "LIVERPOOL",
+--   "SHEFFIELD",
+--   "SOUTHAMPTON",
+--   "LEICESTER",
+--   "NORWICH"
+-- ]
+
+
+
+-- What are the top 10 most expensive towns to buy property in the UK, on average?
+
+
+
+select distinct(town) from uk_prices_3
+where price>=(select avg(price) from uk_prices_3)
+limit 10;
+
+
+select town, avg(price) from uk_prices_3
+GROUP BY town
+ORDER BY 2 desc 
+limit 10;
+
+
+
+-- What is the address of the most expensive property in the dataset?  (Specifically, return the addr1, addr2, street and town columns.)
+
+
+SELECT
+addr1,addr2, street, town, price
+from uk_prices_3
+ORDER BY price DESC
+limit 1;
+
+
+-- Write a single query that returns the average price of properties for each type. The distinct values of type are detached, semi-detached, terraced, flat, and other.
+
+SELECT type, avg(price) FROM uk_prices_3
+GROUP BY type;
+
+SELECT
+    avgIf(price, type = 'detached'),
+    avgIf(price, type = 'semi-detached'),
+    avgIf(price, type = 'terraced'),
+    avgIf(price, type = 'flat'),
+    avgIf(price, type = 'other')
+FROM uk_prices_3;
+
+-- 303381.50725730247	181928.2250229724	165716.60715560857	209727.82009037115	1206634.2717724007
+
+-- What is the sum of the price of all properties sold in the counties of Avon, Essex, Devon, Kent, and Cornwall in the year 2024?
+
+
+SELECT sum(price)
+from uk_prices_3
+WHERE
+county in ['AVON','ESSEX','DEVON','KENT','CORNWALL']
+and toYear(date)== 2024;
+-- Elapsed: 0.781s
+-- Read: 75,08,29,975 rows (1.39 GB)
+-- 563475182425
+
+SELECT
+    sum(price)
+FROM uk_prices_3
+WHERE
+    county IN ['AVON','ESSEX','DEVON','KENT','CORNWALL']
+    AND
+    date >= toDate('2024-01-01') AND date <= toDate('2024-12-31');
+-- Elapsed: 1.802s
+-- Read: 75,08,29,975 rows (1.39 GB)
+
+
+
+-- What is the average price of properties sold per month from 2005 to 2010?
+
+
+SELECT avg(price) from uk_prices_3
+where toYear(date)>=2005 and toYear(date)<=2010;
+
+
+
+select toYear(date) as year, toMonth(date) as month, avg(price)
+from uk_prices_3
+where toYear(date)>=2005 and toYear(date)<=2010
+GROUP BY year, month
+ORDER BY year, month;
+
+-- How many properties were sold in Liverpool each day in 2020?
+
+select toMonth(date), toDayOfMonth(date), count() from uk_prices_3
+where toYear(date)=2020
+GROUP BY toMonth(date), toDayOfMonth(date);
+
+
+SELECT 
+    toMonth(date) AS month,
+    toDayOfMonth(date) AS day,
+    count() AS records_count
+FROM uk_prices_3
+WHERE toYear(date) = 2020
+GROUP BY month, day
+ORDER BY month, day;
+
+
+-- Write a query that returns the price of the most expensive property in each town divided by the price of the most expensive property in the entire dataset. Sort the results in descending order of the computed result.
+
+
+with 
+    (select max(price) from uk_prices_3) as MaxPrice
+select town, max(price)/MaxPrice as ComputedPrice from uk_prices_3
+GROUP by town
+ORDER BY ComputedPrice DESC; 
+
+
+
+
+
+SELECT distinct(town), max(price) from uk_prices_3 GROUP BY town;
+
+
+
+SELECT toYYYYMM(toDate('2025-04-15'))
+
+
+-- How many properties were sold in Liverpool on December 31, 2020
+
+select count() from uk_prices_3
+where town='LIVERPOOL' and toYYYYMMDD(date)=20201231;
+
+
+
+
+
+
+SELECT * FROM
+s3('https://learnclickhouse.s3.us-east-2.amazonaws.com/datasets/mortgage_rates.csv');
+
+
+
+create DICTIONARY uk_mortgage_rates(
+    date DateTime64,
+    variable Decimal32(2),
+    fixed Decimal32(2),
+    bank Decimal32(2)
+)
+PRIMARY KEY date
+SOURCE (
+    HTTP(
+        url  'https://learnclickhouse.s3.us-east-2.amazonaws.com/datasets/mortgage_rates.csv'
+        format 'CSVWithNames'
+    )
+)
+LAYOUT(COMPLEX_KEY_HASHED())
+LIFETIME(2628000000)
+SETTINGS(date_time_input_format='best_effort')
+
+
+
+
+select * from uk_mortgage_rates;
+
+
+
+WITH
+    toMonth(uk_prices_3.date) as month
+SELECT
+    month,
+    count(),
+    any(variable),
+FROM uk_prices_3
+JOIN uk_mortgage_rates
+on month = toMonth(uk_mortgage_rates.date)
+GROUP BY month;
+
+
+WITH
+    toStartOfMonth(uk_prices_3.date) AS month
+SELECT
+    month,
+    count(),
+    any(variable),
+FROM uk_prices_3
+JOIN uk_mortgage_rates
+ON month = toStartOfMonth(uk_mortgage_rates.date)
+GROUP BY month;
+
+
+
+WITH
+    toStartOfMonth(uk_prices_3.date) AS month
+SELECT
+    month,
+    count(),
+    any(variable),
+FROM uk_prices_3
+JOIN uk_mortgage_rates
+ON month = toStartOfMonth(uk_mortgage_rates.date)
+GROUP BY month
+ORDER BY 2 DESC;
+
+
+
+SELECT
+    corr(toFloat32(count),toFloat32(variable))
+FROM (
+    WITH
+        toStartOfMonth(uk_prices_3.date) AS month
+    SELECT
+        month,
+        count() AS count,
+        any(variable) AS variable
+    FROM uk_prices_3
+    JOIN uk_mortgage_rates
+    ON month = toStartOfMonth(uk_mortgage_rates.date)
+    GROUP BY month
+);
+
+
+
+
+SELECT
+    corr(toFloat32(count),toFloat32(fixed))
+FROM (
+    WITH
+        toStartOfMonth(uk_prices_3.date) AS month
+    SELECT
+        month,
+        count() AS count,
+        any(fixed) AS fixed
+    FROM uk_prices_3
+    JOIN uk_mortgage_rates
+    ON month = toStartOfMonth(uk_mortgage_rates.date)
+    WHERE month >= toDate('2000-01-01')
+    GROUP BY month
+);
+
+
+
+SELECT * from system.mutations;
+
+
+
+CREATE TABLE rates_monthly(
+    month Date,
+    variable Decimal32(2),
+    fixed Decimal32(2),
+    bank Decimal32(2)
+)
+ENGINE = ReplacingMergeTree
+PRIMARY KEY month;
+
+
+INSERT INTO rates_monthly
+select
+toDate(date) as month,
+variable,
+fixed,
+bank
+from s3('https://learnclickhouse.s3.us-east-2.amazonaws.com/datasets/mortgage_rates.csv', 'CSVWithNames');
+
+
+
+select * from rates_monthly where month >= toDate('2022-01-01');
+
+
+
+
+SELECT *
+FROM rates_monthly
+WHERE month = '2022-05-31';
+
+INSERT INTO rates_monthly VALUES
+('2022-05-31', 3.2, 3.0, 1.1);
+
+
+
+SELECT *
+FROM rates_monthly FINAL
+WHERE month = '2022-05-31';
+
+
+CREATE TABLE rates_monthly2 (
+    month Date,
+    variable Decimal32(2),
+    fixed Decimal32(2),
+    bank Decimal32(2),
+    version UInt32
+)
+ENGINE = ReplacingMergeTree(version)
+PRIMARY KEY month;
+
+
+
+
+INSERT INTO rates_monthly2
+    SELECT
+        month, variable, fixed, bank, 1
+    FROM rates_monthly;
+
+
+INSERT INTO rates_monthly2 VALUES
+    ('2022-04-30', 3.1, 2.6, 1.1, 10);
+
+INSERT INTO rates_monthly2 VALUES
+    ('2022-04-30', 2.9, 2.4, 0.9, 5);
+
+
+SELECT *
+FROM rates_monthly2 FINAL
+WHERE month = '2022-04-30';
+
+
+OPTIMIZE TABLE rates_monthly2 FINAL;
+
+
+SELECT *
+FROM rates_monthly2
+WHERE month = '2022-04-30';
+
+
+CREATE TABLE messages (
+    id UInt32,
+    day Date,
+    message String,
+    sign Int8
+)
+ENGINE = CollapsingMergeTree(sign)
+PRIMARY KEY id;
+
+
+INSERT INTO messages VALUES
+   (1, '2024-07-04', 'Hello', 1),
+   (2, '2024-07-04', 'Hi', 1),
+   (3, '2024-07-04', 'Bonjour', 1);
+
+
+
+
+select * from messages;
+
+INSERT INTO messages VALUES
+   (2, '2024-07-04', 'Hi', -1),
+   (2, '2024-07-05', 'Goodbye', 1);
+
+
+
+
+INSERT INTO messages (id,sign) VALUES
+    (3,-1);
+
+--Step 6:
+SELECT * FROM messages;
+
+--Step 7:
+SELECT * FROM messages FINAL;
+
+
+INSERT INTO messages VALUES 
+   (1, '2024-07-03', 'Adios', 1);
+
+SELECT * FROM messages FINAL;
+
+
+SELECT
+    min(toYear(date)),
+    max(toYear(date))
+FROM uk_prices_3;
+
+
+SELECT * FROM system.parts
+WHERE table='uk_prices_3';
+
+SELECT count() from uk_prices_3;
+
+SELECT count(), avg(price)
+from uk_prices_3
+where toYear(date)=2020;
+
+SELECT toYear(date),count(), avg(price)
+from uk_prices_3
+GROUP BY toYear(date);
+
+
+
+CREATE TABLE prices_by_year_dest(
+    date Date,
+    price UInt32,
+    addr1 LowCardinality(String),
+    addr2 LowCardinality(String),
+    street LowCardinality(String),
+    town LowCardinality(String),
+    district LowCardinality(String),
+    county LowCardinality(String)
+)
+ENGINE = MergeTree
+PRIMARY KEY (town, date)
+PARTITION BY toYear(date)
+
+
+
+CREATE MATERIALIZED VIEW prices_by_year_view
+TO prices_by_year_dest
+AS
+    SELECT
+        price,
+        date,
+        addr1,
+        addr2,
+        street,
+        town,
+        district,
+        county
+    FROM uk_prices_3;
+
+DROP VIEW prices_by_year_view;
+
+
+INSERT INTO prices_by_year_dest
+    SELECT
+        price,
+        date,
+        addr1,
+        addr2,
+        street,
+        town,
+        district,
+        county
+    FROM uk_prices_3;
+
+
+
+SELECT count()
+FROM prices_by_year_dest;
+
+
+
+--  Refreshable Materialized Views
+
+create table uk_averages_by_day(
+    day LowCardinality(String),
+    average_price UInt32
+)
+ENGINE= MergeTree
+PRIMARY KEY day;
+
+show create table uk_averages_by_day;
+drop table uk_averages_by_day;
+
+
+create MATERIALIZED VIEW uk_averages_by_day_mv
+Refresh every 12 hours
+TO uk_averages_by_day
+AS
+SELECT toYYYYMMDD(date) as day, avg(price) as average_price
+FrOM uk_prices_3
+where toYear(date)>='2025'
+group by day;
+
+select * from uk_averages_by_day;
+
+
+
+SELECT
+    town,
+    sum(price) AS sum_price,
+    formatReadableQuantity(sum_price)
+FROM uk_prices_3
+GROUP BY town
+ORDER BY sum_price DESC;
+
+
+--SummingMergeTree
+
+
+
+create table prices_sum_dest
+(
+    town LowCardinality(String),
+    sum_price UInt64
+)
+ENGINE = SummingMergeTree
+PRIMARY KEY town;
+
+
+create MATERIALIZED VIEW prices_sum_view
+TO prices_sum_dest
+AS
+SELECT
+town, sum(price) as sum_price
+from uk_prices_3
+GROUP BY town;
+
+
+select count() from prices_sum_dest;
+
+INSERT INTO prices_sum_dest
+SELECT town, sum(price) as sum_price from uk_prices_3 GROUP BY town;
+
+
+
+SELECT
+    town,
+    sum(price) AS sum_price,
+    formatReadableQuantity(sum_price)
+FROM uk_prices_3
+WHERE town = 'LONDON'
+GROUP BY town;
+
+
+SELECT
+    town,
+    sum_price AS sum,
+    formatReadableQuantity(sum)
+FROM prices_sum_dest
+WHERE town = 'LONDON';
+
+INSERT INTO uk_prices_3 (price, date, town, street)
+VALUES
+    (4294967295, toDate('1994-01-01'), 'LONDON', 'My Street1');
+
+
+SELECT
+    town,
+    sum(sum_price) AS sum,
+    formatReadableQuantity(sum)
+FROM prices_sum_dest
+WHERE town = 'LONDON'
+GROUP BY town;
+
+
+select town, sum(sum_price) as total_sum, formatReadableQuantity(total_sum)
+from prices_sum_dest
+GROUP BY town
+order by 2 desc
+limit 10;
+
+
+
+-- Aggregating Merge Tree
+
+With
+toStartOfMonth(date) as month
+SELECT
+month, min(price) as min_price, max(price) as max_price, avg(price) as avg_price_per_month
+FROM uk_prices_3
+group by month
+order by month desc;
+
+
+WITH 
+toStartOfMonth(date) as month
+SELECT month, count() from uk_prices_3 group by month order by month desc;
+
+
+
+CREATE TABLE uk_prices_aggs_dest (
+    month Date,
+    min_price SimpleAggregateFunction(min, UInt32),
+    max_price SimpleAggregateFunction(max, UInt32),
+    volume AggregateFunction(count, UInt32),
+    avg_price AggregateFunction(avg, UInt32)
+)
+ENGINE = AggregatingMergeTree
+PRIMARY KEY month;
+
+
+
+create MATERIALIZED VIEW uk_prices_aggs_view
+TO uk_prices_aggs_dest
+AS
+WITH 
+toStartOfMonth(date) as month
+SELECT
+month, minSimpleState(price) as min_price, maxSimpleState(price) as max_price, countState(price) as volume, avgState(price) as avg_price
+from uk_prices_3
+group by month;
+
+INSERT INTO uk_prices_aggs_dest
+WITH
+    toStartOfMonth(date) AS month
+SELECT
+    month,
+    minSimpleState(price) AS min_price,
+    maxSimpleState(price) AS max_price,
+    countState(price) AS volume,
+    avgState(price) AS avg_price
+FROM uk_prices_3
+WHERE date >= toDate('1995-01-01')
+GROUP BY month;
+
+
+
+SELECT avgMerge(avg_price) as avg_merge FROM uk_prices_aggs_dest;
+
+
+
+SELECT * FROM uk_prices_aggs_dest;
+
+
+SELECT
+    month,
+    min(min_price),
+    max(max_price)
+FROM uk_prices_aggs_dest
+WHERE
+    month >= toDate('2023-01-01')
+    AND month < toDate('2024-01-01')
+GROUP BY month
+ORDER BY month DESC;
+
+
+
+
+
+select month, avgMerge(avg_price) from uk_prices_aggs_dest
+where 
+month >= (toStartOfMonth(now()) - (INTERVAL 2 YEAR)) and month < toStartOfMonth(now())
+GROUP BY month
+ORDER BY month desc;
+
+
+select countMerge(volume) from uk_prices_aggs_dest
+where toYear(month)= '2020';
+
+
+INSERT INTO uk_prices_3 (date, price, town) VALUES
+    ('1994-08-01', 10000, 'Little Whinging'),
+    ('1994-08-01', 1, 'Little Whinging');
+
+
+
+
+SELECT
+    month,
+    countMerge(volume),
+    min(min_price),
+    max(max_price)
+FROM uk_prices_aggs_dest
+WHERE toYYYYMM(month) = '199408'
+GROUP BY month;
+
+
+
+SELECT
+    toYear(date) AS year,
+    count(),
+    avg(price),
+    max(price),
+    formatReadableQuantity(sum(price))
+FROM uk_prices_3
+WHERE town = 'LIVERPOOL'
+GROUP BY year
+ORDER BY year DESC;
+
+
+
+SELECT
+    formatReadableSize(sum(bytes_on_disk)),
+    count() AS num_of_parts
+FROM system.parts
+WHERE table = 'uk_prices_3' AND active = 1;
+
+-- Projections
+
+
+Alter table uk_prices_3
+ADD Projection town_date_projection (
+    SELECT town, date, price ORDER BY town, date
+);
+
+
+Alter table uk_prices_3
+MATERIALIZE Projection town_date_projection;
+
+SELECT
+    toYear(date) AS year,
+    count(),
+    avg(price),
+    max(price),
+    formatReadableQuantity(sum(price))
+FROM uk_prices_3
+WHERE town = 'LIVERPOOL'
+GROUP BY year
+ORDER BY year DESC;
+
+
+
+
+
+ALTER TABLE uk_prices_3
+    ADD PROJECTION handy_aggs_projection (
+        SELECT
+            avg(price),
+            max(price),
+            sum(price)
+        GROUP BY town
+    );
+
+
+ALTER TABLE uk_prices_3
+    MATERIALIZE PROJECTION handy_aggs_projection;
+
+
+SELECT
+    avg(price),
+    max(price),
+    formatReadableQuantity(sum(price))
+FROM uk_prices_3
+WHERE town = 'LIVERPOOL';
+
+
+
+EXPLAIN SELECT
+    avg(price),
+    max(price),
+    formatReadableQuantity(sum(price))
+FROM uk_prices_3
+WHERE town = 'LIVERPOOL';
+
+
+-- Skipping Indexes
+
+select uniq(county) from uk_prices_3;
+
+SELECT
+    formatReadableQuantity(count()),
+    avg(price)
+FROM uk_prices_3
+WHERE county = 'GREATER LONDON';
+
+ALTER TABLE uk_prices_3
+    ADD INDEX county_index county
+    TYPE bloom_filter
+    GRANULARITY 1;
+
+
+
+ALTER TABLE uk_prices_3
+    MATERIALIZE INDEX county_index;
+
+
+SELECT *
+FROM system.mutations;
+
+SELECT *
+FROM system.mutations
+WHERE table = 'uk_prices_3';
+
+
+
+SELECT
+    table,
+    formatReadableSize(data_compressed_bytes) as data_compressed,
+    formatReadableSize(secondary_indices_compressed_bytes) as index_compressed,
+    formatReadableSize(primary_key_size) as primary_key
+FROM
+    system.parts
+ORDER BY secondary_indices_uncompressed_bytes DESC
+LIMIT 5;
+
+SELECT
+    formatReadableQuantity(count()),
+    avg(price)
+FROM uk_prices_3
+WHERE county = 'GREATER LONDON';
+
+
+EXPLAIN indexes = 1 SELECT
+    formatReadableQuantity(count()),
+    avg(price)
+FROM uk_prices_3
+WHERE county = 'GREATER LONDON';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Sharding and Replication
+
+SELECT
+    cluster,
+    shard_num,
+    replica_num,
+    database_shard_name,
+    database_replica_name
+FROM system.clusters;
+
+
+
+SELECT event_time, query
+FROM system.query_log
+ORDER BY event_time DESC
+LIMIT 20;
+
+
+
+SELECT
+    event_time,
+    query
+FROM clusterAllReplicas(default, system.query_log)
+ORDER BY  event_time DESC
+LIMIT 20;
+
+
+
+
+SELECT
+    query,
+    tables
+FROM clusterAllReplicas(default, system.query_log)
+WHERE has(tables, 'default.uk_prices_3');
+
+
+
+SELECT count()
+FROM clusterAllReplicas(default, system.query_log)
+WHERE positionCaseInsensitive(query, 'insert') > 0;
+
+
+SELECT count()
+FROM system.parts;
+
+
+SELECT count()
+FROM clusterAllReplicas(default, system.parts);
+
+
+SELECT
+    instance,
+    * EXCEPT instance APPLY formatReadableSize
+FROM (
+    SELECT
+        hostname() AS instance,
+        sum(primary_key_size),
+        sum(primary_key_bytes_in_memory),
+        sum(primary_key_bytes_in_memory_allocated)
+    FROM clusterAllReplicas(default, system.parts)
+    GROUP BY instance
+);
+
+
+
+-- Parallel Processing of Files
+
+
+
+SELECT 
+    PROJECT,
+    count()
+FROM s3('https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_0_*.snappy.parquet')
+GROUP BY PROJECT
+ORDER BY 2 DESC
+LIMIT 20;
+
+
+SELECT
+    PROJECT,
+    count()
+FROM s3Cluster(default,'https://datasets-documentation.s3.eu-west-3.amazonaws.com/pypi/2023/pypi_0_0_*.snappy.parquet')
+GROUP BY PROJECT
+ORDER BY 2 DESC
+LIMIT 20;
+
+
+
+SELECT
+    formatReadableSize(sum(data_uncompressed_bytes) AS u) AS uncompressed,
+    formatReadableSize(sum(data_compressed_bytes) AS c) AS compressed,
+    round(u / c, 2) AS compression_ratio,
+    count() AS num_of_parts
+FROM system.parts
+WHERE table = 'uk_prices_3' AND active = 1;
+
+
+
+SELECT
+    column,
+    formatReadableSize(sum(column_data_uncompressed_bytes) AS u) AS uncompressed,
+    formatReadableSize(sum(column_data_compressed_bytes) AS c) AS compressed,
+    round(u / c, 2) AS compression_ratio
+FROM system.parts_columns
+WHERE table = 'uk_prices_3' AND active = 1
+GROUP BY column;
+
+
+
+
+
+
+
+CREATE TABLE prices_1
+(
+    `id`    UUID,
+    `price` UInt32,
+    `date` Date,
+    `postcode1` LowCardinality(String) ,
+    `postcode2` LowCardinality(String),
+    `type` Enum8('other' = 0, 'terraced' = 1, 'semi-detached' = 2, 'detached' = 3, 'flat' = 4),
+    `is_new` UInt8,
+    `duration` Enum8('unknown' = 0, 'freehold' = 1, 'leasehold' = 2),
+    `addr1` String,
+    `addr2` String,
+    `street` LowCardinality(String),
+    `locality` LowCardinality(String),
+    `town` LowCardinality(String),
+    `district` LowCardinality(String),
+    `county` LowCardinality(String)
+)
+ENGINE = MergeTree
+ORDER BY (postcode1, postcode2, date)
+SETTINGS min_rows_for_wide_part=0,min_bytes_for_wide_part=0;
+
+INSERT INTO prices_1
+    SELECT * FROM uk_prices_3;
+
+
+
+
+SELECT
+    column,
+    formatReadableSize(sum(column_data_uncompressed_bytes) AS u) AS uncompressed,
+    formatReadableSize(sum(column_data_compressed_bytes) AS c) AS compressed,
+    round(u / c, 2) AS compression_ratio
+FROM system.parts_columns
+WHERE table = 'prices_2' AND active = 1
+GROUP BY column;
+
+
+
+SELECT count() from prices_1;
+
+
+CREATE OR REPLACE TABLE prices_2
+(
+    `price` UInt32 CODEC(T64, LZ4),
+    `date` Date CODEC(DoubleDelta, ZSTD),
+    `postcode1` String,
+    `postcode2` String,
+    `is_new` UInt8 CODEC(LZ4HC)
+)
+ENGINE = MergeTree
+ORDER BY date
+SETTINGS min_rows_for_wide_part=0,min_bytes_for_wide_part=0;
+
+
+INSERT INTO prices_2
+    SELECT price, date, postcode1, postcode2, is_new FROM uk_prices_3;
+
+
+
+-- TTL
+
+CREATE or REPLACE table ttl_demo(
+    key UInt32,
+    value String,
+    timestamp DateTime
+)
+ENGINE = MergeTree
+ORDER BY key
+TTL timestamp + INTERVAL 60 SECOND;
+
+INSERT INTO ttl_demo VALUES
+    (1, 'row1', now()),
+    (2, 'row2', now());
+
+
+SELECT * FROM ttl_demo;
+
+show CREATE table ttl_demo;
+
+ALTER TABLE ttl_demo
+MATERIALIZE TTL;
+
+
+ALTer TABLE ttl_demo
+MODIFY COLUMN value String TTL timestamp + INTERVAL 15 SECOND;
+
+
+ALTER TABLE prices_1
+    MODIFY TTL date + INTERVAL 5 YEAR;
+
+ALTER TABLE prices_1
+MATERIALIZE TTL;
+
+SELECT min(date) from prices_1;
